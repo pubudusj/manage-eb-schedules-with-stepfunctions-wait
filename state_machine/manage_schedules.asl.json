@@ -1,0 +1,53 @@
+{
+  "Comment": "ManageSchedulesWithWaitStateMachine",
+  "StartAt": "CreateSchedule",
+  "States": {
+    "CreateSchedule": {
+      "Type": "Task",
+      "Parameters": {
+        "FlexibleTimeWindow": {
+          "Mode": "FLEXIBLE",
+          "MaximumWindowInMinutes.$": "$.flexibleTimeWindow"
+        },
+        "Name.$": "States.Format('schedule_{}', $$.Execution.Name)",
+        "GroupName": "${ScheduleGroup}",
+        "ScheduleExpression.$": "States.Format('at({}T{})', $.scheduleDate, $.scheduleTime)",
+        "Target": {
+          "Arn": "${TargetArn}",
+          "RoleArn": "${RoleArn}",
+          "Input": {
+            "executionId.$": "$$.Execution.Name",
+            "scheduleDate.$": "$.scheduleDate",
+            "scheduleTime.$": "$.scheduleTime",
+            "flexibleTimeWindow.$": "$.flexibleTimeWindow"
+          }
+        }
+      },
+      "Resource": "arn:aws:states:::aws-sdk:scheduler:createSchedule",
+      "Next": "CalculateWaitTime",
+      "ResultPath": "$.schedule"
+    },
+    "CalculateWaitTime": {
+      "Type": "Task",
+      "Resource": "${CalculateWaitTimeLambdaArn}",
+      "Parameters": {
+        "Payload.$": "$"
+      },
+      "Next": "WaitForScheduleCompletion"
+    },
+    "WaitForScheduleCompletion": {
+      "Type": "Wait",
+      "Next": "DeleteSchedule",
+      "TimestampPath": "$.waitUntil"
+    },
+    "DeleteSchedule": {
+      "Type": "Task",
+      "End": true,
+      "Parameters": {
+        "Name.$": "States.Format('schedule_{}', $$.Execution.Name)",
+        "GroupName": "${ScheduleGroup}"
+      },
+      "Resource": "arn:aws:states:::aws-sdk:scheduler:deleteSchedule"
+    }
+  }
+}
