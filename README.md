@@ -5,7 +5,7 @@ Here, Step Function execution will wait until the schedule triggers as per the f
 
 ## Blog Post
 
-You may read more about this here: [Blog Post]
+You may read more about this here: https://medium.com/@pubudusj/manage-eventbridge-schedules-using-step-functions-part-2-with-wait-state-9292ad21ec2e
 
 ## Deploy the application
 
